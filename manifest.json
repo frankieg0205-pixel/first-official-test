@@ -2,8 +2,8 @@
   "name": "Where Does It Hurt?",
   "short_name": "Where Does It Hurt?",
   "description": "An interactive web app to help you understand your symptoms and identify possible pain sources. A simple diagnostic tool for everyday health concerns.",
-  "start_url": "/",
-  "scope": "/",
+  "start_url": "https://app.wheredoesithurt.com/",
+  "scope": "https://app.wheredoesithurt.com/",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#f7c5e2",
@@ -36,7 +36,7 @@
       "name": "Start Diagnosis",
       "short_name": "Diagnosis",
       "description": "Begin the symptom diagnostic quiz",
-      "url": "/diagnosis.html",
+      "url": "https://app.wheredoesithurt.com/diagnosis.html",
       "icons": [
         {
           "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'><rect fill='%23f7c5e2' width='96' height='96'/><text x='48' y='48' font-size='50' text-anchor='middle' dy='.3em' fill='%2391294e' font-weight='bold'>D</text></svg>",
