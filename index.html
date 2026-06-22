@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f7c5e2">
+  <meta name="description" content="An interactive web app to help understand your symptoms and pain sources.">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Where Does It Hurt?">
+  <link rel="icon" type="image/png" sizes="32x32" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%23f7c5e2' width='192' height='192'/><text x='50%' y='50%' font-size='100' text-anchor='middle' dy='.3em' fill='%2391294e'>?</text></svg>">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'><rect fill='%23f7c5e2' width='180' height='180'/><text x='50%' y='50%' font-size='90' text-anchor='middle' dy='.3em' fill='%2391294e' font-weight='bold'>?</text></svg>">
+  <title>Where Does It Hurt?</title>
+  <style>
+    body {
+      background-color: rgb(237,200,224);
+      font-family: "Avantgarde", "TeX Gyre Adventor", "URW Gothic L", sans-serif;
+      font-variant: small-caps;
+      margin: 0;
+    }
+
+    .topbar {
+      background: rgba(255,255,255,0.9);
+      border-bottom: 2px solid #e28f8f;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .topbar .container {
+      max-width: 1000px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 16px;
+    }
+
+    .logo {
+      font-weight: 700;
+      color: #f7c5e2;
+      text-decoration: none;
+      font-size: 18px;
+    }
+
+    .menu {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      gap: 16px;
+    }
+
+    .menu a {
+      text-decoration: none;
+      color: #dca9a9;
+      padding: 6px 8px;
+      border-radius: 8px;
+      outline: 2px solid transparent;
+      outline-offset: 2px;
+      transition: outline 0.2s ease;
+    }
+
+    .menu a:hover,
+    .menu a:focus {
+      background: #f0f0ff;
+      outline: 2px solid #d82abb;
+    }
+
+    .menu a:focus-visible {
+      outline: 2px solid #d82abb;
+    }
+
+    .header-box {
+      border: thick double #d82abb;
+      padding: 10px;
+      margin: 20px auto;
+      width: 420px;
+      border-radius: 30px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: white;
+    }
+
+    h1.title {
+      color: rgb(219, 111, 185);
+      font-size: 35px;
+      font-family: "Apple Chancery", cursive;
+      font-style: italic;
+      margin: 0;
+    }
+
+    h2.subtitle {
+      color: rgb(241, 125, 181);
+      text-align: center;
+      font-family: American Typewriter, serif;
+      text-decoration: underline;
+      margin: 10px auto;
+      max-width: 800px;
+    }
+
+    p.lead {
+      color: #fb6eb7;
+      text-align: center;
+      font-family: "OCR A Std", monospace;
+      max-width: 900px;
+      margin: 0 auto 20px;
+      padding: 0 16px;
+      font-size: 25px;
+      line-height: 1.0;
+    }
+
+    .clock {
+      font-family: Luminari, fantasy;
+      font-size: 20px;
+      color: #f899bf;
+      text-align: center;
+      margin: 0 auto 20px;
+    }
+
+    .media-figure {
+      display: block;
+      width: 60%;
+      max-width: 540px;
+      margin: 16px auto;
+      text-align: center;
+    }
+
+    .media-figure img {
+      width: 100%;
+      height: auto;
+      display: block;
+      border-radius: 12px;
+      box-shadow: 0 6px 18px rgba(255, 255, 255, 0.12);
+    }
+
+    .media-figure .caption {
+      color: #fd7979;
+      font-size: 0.9rem;
+      margin-top: 6px;
+    }
+
+    .corner-img {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      width: 130px;
+      border-radius: 20px;
+      box-shadow: 0 4px 10px rgba(254, 254, 254, 0.1);
+    }
+
+    .draggable-window {
+      position: absolute;
+      width: 280px;
+      background: white;
+      border: 2px solid #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 8px 24px rgba(255, 255, 255, 0.15);
+      overflow: hidden;
+      cursor: default;
+      z-index: 101;
+    }
+
+    .draggable-window#draggableWindow {
+      top: 180px;
+      left: 40px;
+    }
+
+    .draggable-window#linkWindow {
+      top: 240px;
+      left: 340px;
+      border-color: #f0c5f1;
+    }
+
+    .drag-handle {
+      background: #f7c5e2;
+      padding: 12px;
+      font-weight: bold;
+      font-family: "Apple Chancery", cursive;
+      color: #f193ac;
+      text-align: center;
+      cursor: move;
+      user-select: none;
+      outline: 2px solid transparent;
+      outline-offset: 2px;
+      transition: outline 0.2s ease;
+    }
+
+    .drag-handle:focus-visible {
+      outline: 2px solid #91294e;
+      outline-offset: 2px;
+    }
+
+    .window-body {
+      padding: 14px;
+      color: #f17373;
+    }
+
+    .window-body a {
+      color: #c43b7e;
+      text-decoration: none;
+      font-weight: bold;
+      outline: 2px solid transparent;
+      outline-offset: 2px;
+      border-radius: 2px;
+      transition: outline 0.2s ease;
+    }
+
+    .window-body a:hover {
+      text-decoration: underline;
+    }
+
+    .window-body a:focus-visible {
+      outline: 2px solid #91294e;
+      outline-offset: 2px;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .window-toggle {
+      text-align: center;
+      margin: 0 auto 16px;
+    }
+
+    #toggleWindowButton,
+    #toggleLinkWindowButton {
+      background: #f7c5e2;
+      color: #91294e;
+      border: 2px solid #f2b1cb;
+      border-radius: 999px;
+      padding: 10px 18px;
+      font-size: 0.95rem;
+      cursor: pointer;
+      outline: 2px solid transparent;
+      outline-offset: 2px;
+      transition: outline 0.2s ease, background 0.2s ease;
+    }
+
+    #toggleWindowButton:hover,
+    #toggleLinkWindowButton:hover {
+      background: #f0adc8;
+    }
+
+    #toggleWindowButton:focus-visible,
+    #toggleLinkWindowButton:focus-visible {
+      outline: 2px solid #91294e;
+      outline-offset: 2px;
+    }
+
+    #toggleWindowButton {
+      margin-right: 8px;
+    }
+
+    #loadingScreen {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.98);
+      z-index: 9999;
+      animation: fadeInOverlay 0.5s ease forwards;
+    }
+
+    #loadingScreen .loading-content {
+      text-align: center;
+      padding: 24px 32px;
+      border-radius: 20px;
+      background: rgba(247, 197, 226, 0.95);
+      box-shadow: 0 16px 30px rgba(177, 72, 132, 0.18);
+      color: #91294e;
+      font-size: 1.2rem;
+      font-weight: bold;
+      animation: pulseGlow 1.5s ease-in-out infinite;
+    }
+
+    @keyframes pulseGlow {
+      0%, 100% {
+        transform: scale(1);
+        box-shadow: 0 16px 30px rgba(177, 72, 132, 0.18);
+      }
+      50% {
+        transform: scale(1.03);
+        box-shadow: 0 22px 40px rgba(177, 72, 132, 0.24);
+      }
+    }
+
+    @keyframes fadeInOverlay {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
+
+    .spinner {
+      width: 50px;
+      height: 50px;
+      border: 4px solid rgba(145, 41, 78, 0.2);
+      border-top: 4px solid #91294e;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 16px;
+    }
+
+    @keyframes spin {
+      0% {
+        transform: rotate(0deg);
+      }
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+
+    @media (max-width:700px) {
+      .topbar .menu {
+        display: none;
+      }
+      .header-box {
+        width: 90%;
+      }
+      .corner-img {
+        display: none;
+      }
+      .media-figure {
+        width: 90%;
+        margin: 16px auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="loadingScreen">
+    <div class="loading-content">
+      <div class="spinner"></div>
+      <p>Welcome! Please wait while the page loads...</p>
+    </div>
+  </div>
+  <nav class="topbar" role="navigation" aria-label="Main navigation">
+    <div class="container">
+      <a class="logo" href="index.html" aria-label="Where Does It Hurt? Home">Where Does It Hurt?</a>
+      <ul class="menu" role="menubar" aria-label="Main menu">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="diagnosis.html">Diagnosis</a></li>
+        <li><a href="about.html">About</a></li>
+        <li><a href="contact.html">Contact</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <img src="https://via.placeholder.com/300x200.png?text=Doctor" alt="Doctor in medical setting" class="corner-img">
+
+  <main>
+    <div class="header-box">
+      <h1 class="title">Where Does It Hurt?</h1>
+    </div>
+
+    <h2 class="subtitle">An interactive website to figure out why you are feeling pain and where it could possibly come from!</h2>
+
+    <p class="lead">Welcome to the "Where Does It Hurt?" website! Please note that this is a simple interactive tool and not a substitute for professional medical advice. If you believe your condition is serious or dangerous, do not hesitate to seek professional medical help. Another warning, this is just made by a simple teenager, so if there are some inaccuracies or mistakes, please do not be afraid to point it out! Constructive criticism is always welcomed. Enjoy!</p>
+    <p class="lead">To get started, simply click on the "Diagnosis" tab in the menu above. You will answer some questions to get some basic understanding of your symptoms, and the diagnosis will be provided. Note that it may not be completely accurate, so please consult with a licensed healthcare expert or professional for a serious diagnosis. Have fun!</p>
+
+    <div class="window-toggle" role="region" aria-label="Window controls">
+      <button id="toggleWindowButton" type="button" aria-expanded="true" aria-controls="draggableWindow">Hide clock window</button>
+      <button id="toggleLinkWindowButton" type="button" aria-expanded="true" aria-controls="linkWindow">Hide link window</button>
+    </div>
+
+    <div class="draggable-window" id="draggableWindow" role="region" aria-label="Current time window" tabindex="0">
+      <div class="drag-handle" id="dragHandle" tabindex="0" role="button" aria-label="Drag to move clock window">Current Time!</div>
+      <div class="window-body">
+        <p class="clock" id="timeElement" aria-live="polite" aria-atomic="true">Loading time...</p>
+      </div>
+    </div>
+
+    <div class="draggable-window" id="linkWindow" role="region" aria-label="Information sources window" tabindex="0">
+      <div class="drag-handle" id="linkHandle" tabindex="0" role="button" aria-label="Drag to move information window">Want to know where I got my information?</div>
+      <div class="window-body">
+        <p>Visit this website: <a href="https://my.clevelandclinic.org/health/symptoms?dFR[type][0]=symptoms" target="_blank" rel="noopener noreferrer" aria-label="Cleveland Clinic Symptoms (opens in new window)">Cleveland Clinic Symptoms</a> for more details.</p>
+      </div>
+    </div>
+
+    <figure class="media-figure">
+      <img src="https://i.pinimg.com/736x/52/6f/66/526f6612cb632c7722936aa257e67bba.jpg" alt="Medical reference illustration showing human anatomy">
+      <figcaption class="caption">Good luck!</figcaption>
+    </figure>
+  </main>
+
+  <script>
+    function updateClock() {
+      const now = new Date();
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      const seconds = String(now.getSeconds()).padStart(2, '0');
+      document.getElementById('timeElement').textContent = `${hours}:${minutes}:${seconds}`;
+    }
+
+    updateClock();
+    setInterval(updateClock, 1000);
+
+    const windows = document.querySelectorAll('.draggable-window');
+    const handles = document.querySelectorAll('.drag-handle');
+
+    let dragging = null;
+    let offsetX = 0;
+    let offsetY = 0;
+
+    handles.forEach((handle) => {
+      handle.addEventListener('mousedown', (event) => {
+        const targetWindow = handle.parentElement;
+        dragging = targetWindow;
+        const rect = targetWindow.getBoundingClientRect();
+        offsetX = event.clientX - rect.left;
+        offsetY = event.clientY - rect.top;
+        document.body.style.userSelect = 'none';
+      });
+    });
+
+    document.addEventListener('mousemove', (event) => {
+      if (!dragging) return;
+      dragging.style.left = `${event.clientX - offsetX}px`;
+      dragging.style.top = `${event.clientY - offsetY}px`;
+    });
+
+    document.addEventListener('mouseup', () => {
+      dragging = null;
+      document.body.style.userSelect = '';
+    });
+
+    const toggleButton = document.getElementById('toggleWindowButton');
+    const windowElement = document.getElementById('draggableWindow');
+    const toggleLinkButton = document.getElementById('toggleLinkWindowButton');
+    const linkWindowElement = document.getElementById('linkWindow');
+
+    function setWindowVisibility(visible) {
+      if (visible) {
+        windowElement.classList.remove('hidden');
+        toggleButton.textContent = 'Hide Current Time';
+      } else {
+        windowElement.classList.add('hidden');
+        toggleButton.textContent = 'See the Current Time!';
+      }
+    }
+
+    function setLinkWindowVisibility(visible) {
+      if (visible) {
+        linkWindowElement.classList.remove('hidden');
+        toggleLinkButton.textContent = 'Hide information link';
+      } else {
+        linkWindowElement.classList.add('hidden');
+        toggleLinkButton.textContent = 'Origin of Information';
+      }
+    }
+
+    toggleButton.addEventListener('click', () => {
+      const isHidden = windowElement.classList.contains('hidden');
+      setWindowVisibility(isHidden);
+      toggleButton.setAttribute('aria-expanded', !isHidden);
+    });
+
+    toggleLinkButton.addEventListener('click', () => {
+      const isHidden = linkWindowElement.classList.contains('hidden');
+      setLinkWindowVisibility(isHidden);
+      toggleLinkButton.setAttribute('aria-expanded', !isHidden);
+    });
+
+    window.addEventListener('load', () => {
+      const loadingScreen = document.getElementById('loadingScreen');
+      if (loadingScreen) {
+        setTimeout(() => {
+          loadingScreen.style.opacity = '0';
+          loadingScreen.style.transition = 'opacity 0.6s ease';
+          setTimeout(() => {
+            loadingScreen.style.display = 'none';
+          }, 600);
+        }, 2500);
+      }
+    });
+
+    // Service Worker Registration
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('service-worker.js')
+          .then(registration => {
+            console.log('Service Worker registered:', registration);
+          })
+          .catch(error => {
+            console.log('Service Worker registration failed:', error);
+          });
+      });
+    }
+
+    // Install prompt handler
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      console.log('Install prompt available');
+    });
+  </script>
+</body>
+</html>
